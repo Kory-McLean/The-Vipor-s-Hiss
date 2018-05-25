@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The Viper's Hiss</title>
+  <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="voiceinator">
+
+      <h1>The Viper's Hiss</h1>
+
+      <select name="voice" id="voices">
+        <option value="">Select A Voice</option>
+      </select>
+
+      <!--suppress XmlInvalidId -->
+        <label for="rate">Rate:</label>
+      <input name="rate" type="range" min="0" max="3" value="1" step="0.1">
+
+      <!--suppress XmlInvalidId -->
+        <label for="pitch">Pitch:</label>
+
+      <input name="pitch" type="range" min="0" max="2" step="0.1">
+      <textarea name="text">Speak...I'm Listening</textarea>
+      <button id="stop">Stop!</button>
+      <button id="speak">Speak</button>
+
+    </div>
+
+<script>
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const cmdWords = ["open", "goodbye", "sing"];
+
+    const msg = new SpeechSynthesisUtterance();
+    const txtBox = document.querySelector('[name=text');
+    msg.text = txtBox.value;
+
+
+    const recognition = new SpeechRecognition();
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    
+    let inputArray;
+    recognition.addEventListener('result', e => {
+        const transcript = Array.from(e.results)
+            .map(result => result[0])
+            .map(result => result.transcript)
+            .join('');
+        
+        txtBox.value = transcript;
+        if (e.results[0].isFinal) {
+            //HERE WE WILL DO THE SEARCH
+            //SO FAR IT WILL JUST TALK BACK
+            inputArray = transcript.split(" ");
+            toggle();
+            processCommand();
+        }
+    });
+
+    recognition.addEventListener('end', recognition.start);
+
+    recognition.start();
+    
+    function processCommand() {
+        if (!cmdWords.includes(inputArray[0])){
+            respondConfused();
+        } //if there is no recognized command word we respond Confused
+        switch (inputArray[0]){
+            case "open":
+                window.open(`https://${inputArray[1]}`);
+                break;
+            case "goodbye":
+                setTimeout(() => window.close(), 1000);
+                break;
+            case "sing":
+                singToUser();
+                break;
+            }
+    }
+    
+    
+  //Below is for synthesis
+    
+  let voices = [];
+  const voicesDropdown = document.querySelector('[name="voice"]');
+  const options = document.querySelectorAll('[type="range"], [name="text"]');
+  const speakButton = document.querySelector('#speak');
+  const stopButton = document.querySelector('#stop');
+
+  function populateVoices() {
+    voices = this.getVoices();
+    voicesDropdown.innerHTML = voices
+      .filter(voice => voice.lang.includes('en'))
+      .map(voice => `<option value="${voice.name}">${voice.name} (${voice.lang})</option>`)
+      .join('');
+  }
+
+  function setVoice() {
+    msg.voice = voices.find(voice => voice.name === this.value);
+    toggle();
+  }
+  
+  function singToUser() {
+      speechSynthesis.cancel();
+
+      const thriller = "It's close to midnight\n" +
+          "Something evil's lurking from the dark\n" +
+          "Under the moonlight\n" +
+          "You see a sight that almost stops your heart\n" +
+          "You try to scream\n" +
+          "But terror takes the sound before you make it\n" +
+          "You start to freeze\n" +
+          "As horror looks you right between your eyes\n" +
+          "You're paralyzed\n" +
+          "\n" +
+          "‘Cause this is thriller\n" +
+          "Thriller night\n" +
+          "And no one’s gonna save you\n" +
+          "From the beast about to strike\n" +
+          "You know it’s thriller\n" +
+          "Thriller night\n" +
+          "You’re fighting for your life\n" +
+          "Inside a killer\n" +
+          "Thriller tonight, yeahhhhh\n"+
+              "\n"+
+              "Okay I'm done";
+      
+      const mrsJackson = "Yeah, this one right here goes out\n" +
+          "To all the baby's mamas' mamas\n" +
+          "Mamas, mamas, baby mamas' mamas\n" +
+          "Yeah, go like this\n" +
+          "\n" +
+          "I'm sorry, Ms. Jackson, I am for real\n" +
+          "Never meant to make your daughter cry\n" +
+          "I apologize a trillion times\n" +
+          "I'm sorry, Ms. Jackson, I am for real\n" +
+          "Never meant to make your daughter cry\n" +
+          "I apologize a trillion times\n"+
+              "\n"+
+          "woah that was a throwback";
+      
+      const rapGod = "I'm beginnin' to feel like a Rap God, Rap God\n" +
+          "All my people from the front to the back nod, back nod\n" +
+          "Now who thinks their arms are long enough to slap box, slap box?\n" +
+          "They said I rap like a robot, so call me Rap-bot\n" +
+          "\n" +
+          "But for me to rap like a computer it must be in my genes" +
+          "\n" +
+          "who am i kidding" +
+          "\n " +
+          "i am not eminem ";
+      
+      const songs = [thriller, mrsJackson, rapGod];
+      const index = Math.floor(Math.random() * songs.length);
+      console.log(index);
+      msg.text = songs[index];
+      speechSynthesis.speak(msg);
+  }
+
+  function toggle(startOver = true) {
+    speechSynthesis.cancel();
+    if (startOver) {
+        msg.text = txtBox.value;
+        speechSynthesis.speak(msg);
+    }
+  }
+  
+  function respondConfused() {
+      speechSynthesis.cancel();
+      msg.text = "I'm sorry I do not know how to do that";
+      speechSynthesis.speak(msg);
+  }
+
+  function setOption() {
+    msg[this.name] = this.value;
+    //toggle();
+  }
+
+  speechSynthesis.addEventListener('voiceschanged', populateVoices);
+  voicesDropdown.addEventListener('change', setVoice);
+  options.forEach(option => option.addEventListener('change', setOption));
+  speakButton.addEventListener('click', toggle);
+  stopButton.addEventListener('click', () => toggle(false));
+    
+</script>
+
+</body>
+</html>
